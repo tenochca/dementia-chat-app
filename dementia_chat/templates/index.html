@@ -1,6 +1,290 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<h1>TESTING APP</h1>
+<body>
+    <h1>AI Assistant Chat with Biomarkers</h1>
+    <div id="chatHistory"></div>
+    <div id="listeningControls">
+        <button id="startButton">Start Listening</button>
+        <button id="stopButton" disabled>Stop Listening</button>
+    </div>
+    <div id="biomarkerButtons">
+        <button onclick="selectBiomarker('overall')">Overall</button>
+        <button onclick="selectBiomarker('pragmatic')">Pragmatic</button>
+        <button onclick="selectBiomarker('grammar')">Grammar</button>
+        <button onclick="selectBiomarker('turntaking')">Turn-taking</button>
+        <button onclick="selectBiomarker('anomia')">Anomia</button>
+        <button onclick="selectBiomarker('prosody')">Prosody</button>
+        <button onclick="selectBiomarker('pronunciation')">Pronunciation</button>
+      </div>
+    <div id="biomarkerDisplay">
+        <canvas id="biomarkerChart"></canvas>
+    </div>
+    <div id="debugInfo"></div>
+
+    <script>
+        const subscriptionKey = "3249fb4e6d8248569b42d5dbf693c259";
+        const serviceRegion = "eastus";
+        const wsUrl = "ws://localhost:8765";  // Changed to use localhost
+        // const wsUrl = "wss://dementia.ngrok.app";
+
+        let recognizer, synthesizer, ws;
+        let isListening = false;
+        let systemSpeaking = false;
+        let userSpeaking = false;
+
+        // Biomarker chart
+        let biomarkerChart;
+        const biomarkerData = {
+            labels: [],
+            datasets: [
+                { label: 'Pragmatic', data: [], borderColor: 'red', fill: false },
+                { label: 'Grammar', data: [], borderColor: 'blue', fill: false },
+                { label: 'Turntaking', data: [], borderColor: 'green', fill: false },
+                { label: 'Anomia', data: [], borderColor: 'yellow', fill: false },
+                { label: 'Prosody', data: [], borderColor: 'purple', fill: false },
+                { label: 'Pronunciation', data: [], borderColor: 'orange', fill: false }
+            ]
+        };
+
+        let chartInitialized = false;
+        let updateInterval;
+        let lastUpdateTime = Date.now();
+        let lastScores = {};
+
+        function log(message, isOverlapped = false) {
+            console.log(message);
+            const debugInfo = document.getElementById('debugInfo');
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = message + '<br>';
+            if (isOverlapped) {
+                messageElement.className = 'overlapped-speech';
+            }
+            debugInfo.appendChild(messageElement);
+            debugInfo.scrollTop = debugInfo.scrollHeight;
+        }
+
+        document.getElementById('startButton').addEventListener('click', startListening);
+        document.getElementById('stopButton').addEventListener('click', stopListening);
+
+        function startListening() {
+            isListening = true;
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
+            speechConfig.speechRecognitionLanguage = "en-US";
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+            recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+            synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig);
+
+            recognizer.recognizing = (s, e) => {
+                if (e.result.reason === SpeechSDK.ResultReason.RecognizingSpeech) {
+                    userSpeaking = true;
+                    checkOverlap();
+                }
+            };
+
+            recognizer.recognized = (s, e) => {
+                if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+                    userSpeaking = false;
+                    const transcription = e.result.text;
+                    log(`Recognized: ${transcription}`);
+                    addMessageToChat('You', transcription);
+                    sendTranscriptionToServer(transcription);
+                }
+            };
+
+            recognizer.startContinuousRecognitionAsync();
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+
+            ws = new WebSocket(wsUrl);
+            ws.onopen = () => log("WebSocket connected");
+            ws.onmessage = (event) => {
+                if (!isListening) return;
+                const response = JSON.parse(event.data);
+                if (response.type === 'llm_response') {
+                    addMessageToChat('AI', response.data);
+                    speakResponse(response.data);
+                } else if (response.type === 'biomarker_scores') {
+                    updateChart(response.data);
+                } else if (response.type === 'periodic_scores') {
+                    updatePeriodicScores(response.data);
+                }
+            };
+
+            if (!chartInitialized) {
+                initChart();
+            }
+            startChartUpdates();
+        }
+
+        function stopListening() {
+            isListening = false;
+            if (recognizer) {
+                recognizer.stopContinuousRecognitionAsync();
+                recognizer = undefined;
+            }
+            if (ws) ws.close();
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+            stopChartUpdates();
+        }
+
+        function sendTranscriptionToServer(transcription) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'transcription', data: transcription }));
+            }
+        }
+
+        function addMessageToChat(sender, message) {
+            const chatHistory = document.getElementById('chatHistory');
+            const messageElement = document.createElement('p');
+            messageElement.className = sender === 'You' ? 'message user-message' : 'message ai-message';
+            messageElement.textContent = `${sender}: ${message}`;
+            chatHistory.appendChild(messageElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function speakResponse(text) {
+            systemSpeaking = true;
+            synthesizer.speakTextAsync(
+                text, 
+                result => {
+                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                        log("Speech synthesized");
+                        systemSpeaking = false;
+                    }
+                },
+                error => {
+                    log(`Error synthesizing speech: ${error}`);
+                    systemSpeaking = false;
+                }
+            );
+        }
+
+        function checkOverlap() {
+            if (systemSpeaking && userSpeaking) {
+                log("Overlapped speech detected!", true);
+                ws.send(JSON.stringify({ type: 'overlapped_speech' }));
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('biomarkerChart').getContext('2d');
+            biomarkerChart = new Chart(ctx, {
+                type: 'line',
+                data: biomarkerData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            type: 'linear', 
+                            position: 'bottom',
+                            min: 0,
+                            max: 60,  // Show 1 minute of data
+                            ticks: {
+                                stepSize: 10,
+                                callback: function(value, index, values) {
+                                    return formatTime(value);
+                                },
+                                color: '#ffffff'
+                            }
+                        },
+                        y: { 
+                            min: 0, 
+                            max: 1,
+                            ticks: {
+                                stepSize: 0.1,
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 0  // Disable animations for smoother updates
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+            chartInitialized = true;
+        }
+
+        function updateChart(newData) {
+            if (!chartInitialized || !isListening) return;
+
+            const currentTime = Date.now();
+            const secondsElapsed = (currentTime - lastUpdateTime) / 1000;
+
+            if (newData) {
+                lastScores = { ...lastScores, ...newData };
+            }
+
+            const timestamp = biomarkerData.labels.length;
+            biomarkerData.labels.push(timestamp);
+
+            biomarkerData.datasets.forEach((dataset) => {
+                const value = lastScores[dataset.label.toLowerCase()] || dataset.data[dataset.data.length - 1]?.y || 0;
+                dataset.data.push({ x: timestamp, y: value });
+
+                if (dataset.data.length > 60) {
+                    dataset.data.shift();
+                }
+            });
+
+            if (timestamp > 60) {
+                biomarkerChart.options.scales.x.min = timestamp - 59;
+                biomarkerChart.options.scales.x.max = timestamp + 1;
+            }
+
+            biomarkerChart.update();
+            lastUpdateTime = currentTime;
+        }
+
+        function updatePeriodicScores(scores) {
+            if (!chartInitialized || !isListening) return;
+
+            lastScores = { ...lastScores, ...scores };
+            updateChart();
+        }
+
+        function selectBiomarker(biomarker) {
+            if (!chartInitialized) return;
+            biomarkerData.datasets.forEach(dataset => {
+                dataset.hidden = biomarker !== 'overall' && dataset.label.toLowerCase() !== biomarker.toLowerCase();
+            });
+            biomarkerChart.update();
+        }
+
+        function startChartUpdates() {
+            if (!updateInterval) {
+                updateInterval = setInterval(() => updateChart(), 1000);
+            }
+        }
+
+        function stopChartUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Chart will be initialized when the first transcription is sent
+        });
+    </script>
+</body>
 {% endblock %}
 
