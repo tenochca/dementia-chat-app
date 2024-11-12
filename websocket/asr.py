@@ -7,8 +7,8 @@ import time
 import datetime
 
 
-from Working_code import config as cf
-from Working_code import tts
+import config as cf
+import tts
 
 # set API keys
 speech_key, service_region = cf.speech_key, cf.service_region

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres
@@ -5,8 +7,11 @@ services:
       .env
     networks:
       - my_network
+
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile-django
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
@@ -16,6 +21,19 @@ services:
       - db
     networks:
       - my_network
+
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile-websocket
+    command: python websocket_server.py
+    ports:
+      - "8765:8765"
+    depends_on:
+      - web
+    networks:
+      - my_network
+
 networks:
   my_network:
     driver: bridge
