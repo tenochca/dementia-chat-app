@@ -25,7 +25,10 @@
     <script>
         const subscriptionKey = "3249fb4e6d8248569b42d5dbf693c259";
         const serviceRegion = "eastus";
-        const wsUrl = "ws://localhost:8765";  // Changed to use localhost
+        // Replace static wsUrl with dynamic version
+        const wsUrl = window.location.hostname === 'localhost' 
+            ? `ws://${window.location.hostname}:8765`  // Browser access
+            : 'ws://websocket:8765'; // Container access
         // const wsUrl = "wss://dementia.ngrok.app";
 
         let recognizer, synthesizer, ws;
@@ -97,7 +100,18 @@
             document.getElementById('stopButton').disabled = false;
 
             ws = new WebSocket(wsUrl);
-            ws.onopen = () => log("WebSocket connected");
+            ws.onopen = () => {
+                log("WebSocket connected");
+                console.log("Connected to:", wsUrl);
+            };
+            ws.onerror = (error) => {
+                log(`WebSocket connection failed`);
+                console.error("WebSocket error:", error);
+            };
+            ws.onclose = (event) => {
+                log(`WebSocket closed: ${event.code}`);
+                console.log("WebSocket closed:", event);
+            };
             ws.onmessage = (event) => {
                 if (!isListening) return;
                 const response = JSON.parse(event.data);
@@ -287,4 +301,3 @@
     </script>
 </body>
 {% endblock %}
-

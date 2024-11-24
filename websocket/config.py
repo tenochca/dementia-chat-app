@@ -73,13 +73,18 @@ max_length = 256
 prompt = "You are an assistant for dementia patients. Provide any response as much short as possible."
 
 try:
+    model_path = current_path + "/Phi-3_finetuned.gguf"
+    if not os.path.exists(model_path):
+        logger.error(f"Model file not found: {model_path}")
+        raise FileNotFoundError(f"Model file not found: {model_path}")
+        
     llm = Llama(
-        model_path=current_path + "/Phi-3_finetuned.gguf",  # path to GGUF file
-        n_ctx=max_length,  # The max sequence length to use
-        n_threads=16,  # The number of CPU threads to use, tailor to your system
-        n_gpu_layers=0  # Set to 0 for CPU-only execution
+        model_path=model_path,
+        n_ctx=max_length,
+        n_threads=16,
+        n_gpu_layers=0
     )
     logger.info("LLM initialized successfully")
 except Exception as e:
-    logger.error(f"Error initializing LLM: {e}")
+    logger.error(f"Failed to initialize LLM: {e}")
     raise

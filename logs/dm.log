@@ -1,0 +1,133 @@
+03:35:26 INFO: websocket.config: LLM initialized successfully
+03:35:26 DEBUG: asyncio: Using selector: EpollSelector
+03:35:26 INFO: websockets.server: server listening on 0.0.0.0:8765
+03:35:26 INFO: __main__: WebSocket server started on ws://0.0.0.0:8765
+04:22:20 INFO: websocket.config: LLM initialized successfully
+04:22:20 DEBUG: asyncio: Using selector: EpollSelector
+04:22:20 INFO: __main__: Starting WebSocket server...
+04:22:20 INFO: websockets.server: server listening on 0.0.0.0:8765
+04:22:20 INFO: __main__: WebSocket server started successfully on ws://0.0.0.0:8765
+04:29:47 DEBUG: websockets.server: = connection is CONNECTING
+04:29:47 DEBUG: websockets.server: < GET / HTTP/1.1
+04:29:47 DEBUG: websockets.server: < Host: localhost:8765
+04:29:47 DEBUG: websockets.server: < Connection: Upgrade
+04:29:47 DEBUG: websockets.server: < Pragma: no-cache
+04:29:47 DEBUG: websockets.server: < Cache-Control: no-cache
+04:29:47 DEBUG: websockets.server: < User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0
+04:29:47 DEBUG: websockets.server: < Upgrade: websocket
+04:29:47 DEBUG: websockets.server: < Origin: http://localhost:8000
+04:29:47 DEBUG: websockets.server: < Sec-WebSocket-Version: 13
+04:29:47 DEBUG: websockets.server: < Accept-Encoding: gzip, deflate, br, zstd
+04:29:47 DEBUG: websockets.server: < Accept-Language: en-US,en;q=0.9,es;q=0.8
+04:29:47 DEBUG: websockets.server: < Cookie: csrftoken=McfcPLPNcdRZ8jgqJpbCtBmuvoe4N6HOkKLp0saBxvTXfoeceWTwSHReSesUfSRZ; sessionid=lbvto36xbtqjg2aixkbw4s8zirko6mrp
+04:29:47 DEBUG: websockets.server: < Sec-WebSocket-Key: 8IQiaQoX2ye3XcTSM6liKw==
+04:29:47 DEBUG: websockets.server: < Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+04:29:47 DEBUG: websockets.server: > HTTP/1.1 101 Switching Protocols
+04:29:47 DEBUG: websockets.server: > Date: Tue, 19 Nov 2024 04:29:47 GMT
+04:29:47 DEBUG: websockets.server: > Upgrade: websocket
+04:29:47 DEBUG: websockets.server: > Connection: Upgrade
+04:29:47 DEBUG: websockets.server: > Sec-WebSocket-Accept: /FrpX0fsL6wRhIuq6XPEs1bXQic=
+04:29:47 DEBUG: websockets.server: > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+04:29:47 DEBUG: websockets.server: > Server: Python/3.11 websockets/14.1
+04:29:47 DEBUG: websockets.server: = connection is OPEN
+04:29:47 INFO: websockets.server: connection open
+04:29:47 ERROR: websockets.server: connection handler failed
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/websockets/asyncio/server.py", line 373, in conn_handler
+    await self.handler(connection)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: handle_client() missing 1 required positional argument: 'path'
+04:29:47 DEBUG: websockets.server: > CLOSE 1011 (internal error) [2 bytes]
+04:29:47 DEBUG: websockets.server: = connection is CLOSING
+04:29:47 DEBUG: websockets.server: < CLOSE 1011 (internal error) [2 bytes]
+04:29:47 DEBUG: websockets.server: > EOF
+04:29:47 DEBUG: websockets.server: x half-closing TCP connection
+04:29:47 DEBUG: websockets.server: < EOF
+04:29:47 DEBUG: websockets.server: = connection is CLOSED
+04:34:47 DEBUG: websockets.server: = connection is CONNECTING
+04:34:47 DEBUG: websockets.server: < GET / HTTP/1.1
+04:34:47 DEBUG: websockets.server: < Host: localhost:8765
+04:34:47 DEBUG: websockets.server: < Connection: Upgrade
+04:34:47 DEBUG: websockets.server: < Pragma: no-cache
+04:34:47 DEBUG: websockets.server: < Cache-Control: no-cache
+04:34:47 DEBUG: websockets.server: < User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0
+04:34:47 DEBUG: websockets.server: < Upgrade: websocket
+04:34:47 DEBUG: websockets.server: < Origin: http://localhost:8000
+04:34:47 DEBUG: websockets.server: < Sec-WebSocket-Version: 13
+04:34:47 DEBUG: websockets.server: < Accept-Encoding: gzip, deflate, br, zstd
+04:34:47 DEBUG: websockets.server: < Accept-Language: en-US,en;q=0.9,es;q=0.8
+04:34:47 DEBUG: websockets.server: < Cookie: csrftoken=McfcPLPNcdRZ8jgqJpbCtBmuvoe4N6HOkKLp0saBxvTXfoeceWTwSHReSesUfSRZ; sessionid=lbvto36xbtqjg2aixkbw4s8zirko6mrp
+04:34:47 DEBUG: websockets.server: < Sec-WebSocket-Key: qDaV9OEjVE3MTpmqI+p70A==
+04:34:47 DEBUG: websockets.server: < Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+04:34:47 DEBUG: websockets.server: > HTTP/1.1 101 Switching Protocols
+04:34:47 DEBUG: websockets.server: > Date: Tue, 19 Nov 2024 04:34:47 GMT
+04:34:47 DEBUG: websockets.server: > Upgrade: websocket
+04:34:47 DEBUG: websockets.server: > Connection: Upgrade
+04:34:47 DEBUG: websockets.server: > Sec-WebSocket-Accept: xSpa9WmPI919clKYZ0T+8HVplpw=
+04:34:47 DEBUG: websockets.server: > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+04:34:47 DEBUG: websockets.server: > Server: Python/3.11 websockets/14.1
+04:34:47 DEBUG: websockets.server: = connection is OPEN
+04:34:47 INFO: websockets.server: connection open
+04:34:47 ERROR: websockets.server: connection handler failed
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/websockets/asyncio/server.py", line 373, in conn_handler
+    await self.handler(connection)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: handle_client() missing 1 required positional argument: 'path'
+04:34:47 DEBUG: websockets.server: > CLOSE 1011 (internal error) [2 bytes]
+04:34:47 DEBUG: websockets.server: = connection is CLOSING
+04:34:48 DEBUG: websockets.server: < CLOSE 1011 (internal error) [2 bytes]
+04:34:48 DEBUG: websockets.server: > EOF
+04:34:48 DEBUG: websockets.server: x half-closing TCP connection
+04:34:48 DEBUG: websockets.server: < EOF
+04:34:48 DEBUG: websockets.server: = connection is CLOSED
+05:02:30 INFO: websocket.config: LLM initialized successfully
+05:02:30 DEBUG: asyncio: Using selector: EpollSelector
+05:02:31 INFO: websockets.server: server listening on 0.0.0.0:8765
+05:02:31 INFO: __main__: WebSocket server started on ws://0.0.0.0:8765
+05:14:22 INFO: websocket.config: LLM initialized successfully
+05:14:22 DEBUG: asyncio: Using selector: EpollSelector
+05:14:22 INFO: websockets.server: server listening on 0.0.0.0:8765
+05:14:22 INFO: __main__: WebSocket server started on ws://0.0.0.0:8765
+21:33:06 INFO: websocket.config: LLM initialized successfully
+21:33:06 DEBUG: asyncio: Using selector: EpollSelector
+21:33:06 INFO: __main__: Starting WebSocket server...
+21:33:06 INFO: websockets.server: server listening on 0.0.0.0:8765
+21:33:06 INFO: __main__: WebSocket server started successfully on ws://0.0.0.0:8765
+21:38:22 DEBUG: websockets.server: = connection is CONNECTING
+21:38:22 DEBUG: websockets.server: < GET / HTTP/1.1
+21:38:22 DEBUG: websockets.server: < Host: localhost:8765
+21:38:22 DEBUG: websockets.server: < Connection: Upgrade
+21:38:22 DEBUG: websockets.server: < Pragma: no-cache
+21:38:22 DEBUG: websockets.server: < Cache-Control: no-cache
+21:38:22 DEBUG: websockets.server: < User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0
+21:38:22 DEBUG: websockets.server: < Upgrade: websocket
+21:38:22 DEBUG: websockets.server: < Origin: http://localhost:8000
+21:38:22 DEBUG: websockets.server: < Sec-WebSocket-Version: 13
+21:38:22 DEBUG: websockets.server: < Accept-Encoding: gzip, deflate, br, zstd
+21:38:22 DEBUG: websockets.server: < Accept-Language: en-US,en;q=0.9,es;q=0.8
+21:38:22 DEBUG: websockets.server: < Cookie: csrftoken=McfcPLPNcdRZ8jgqJpbCtBmuvoe4N6HOkKLp0saBxvTXfoeceWTwSHReSesUfSRZ; sessionid=lbvto36xbtqjg2aixkbw4s8zirko6mrp
+21:38:22 DEBUG: websockets.server: < Sec-WebSocket-Key: RX+RkgAWMcinXwlnnWQ8lQ==
+21:38:22 DEBUG: websockets.server: < Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+21:38:22 DEBUG: websockets.server: > HTTP/1.1 101 Switching Protocols
+21:38:22 DEBUG: websockets.server: > Date: Sun, 24 Nov 2024 21:38:22 GMT
+21:38:22 DEBUG: websockets.server: > Upgrade: websocket
+21:38:22 DEBUG: websockets.server: > Connection: Upgrade
+21:38:22 DEBUG: websockets.server: > Sec-WebSocket-Accept: HdO7DKr5cTPf8mJvIimx7LPy9k4=
+21:38:22 DEBUG: websockets.server: > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+21:38:22 DEBUG: websockets.server: > Server: Python/3.11 websockets/14.1
+21:38:22 DEBUG: websockets.server: = connection is OPEN
+21:38:22 INFO: websockets.server: connection open
+21:38:22 ERROR: websockets.server: connection handler failed
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/websockets/asyncio/server.py", line 373, in conn_handler
+    await self.handler(connection)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: handle_client() missing 1 required positional argument: 'path'
+21:38:22 DEBUG: websockets.server: > CLOSE 1011 (internal error) [2 bytes]
+21:38:22 DEBUG: websockets.server: = connection is CLOSING
+21:38:22 DEBUG: websockets.server: < CLOSE 1011 (internal error) [2 bytes]
+21:38:22 DEBUG: websockets.server: > EOF
+21:38:22 DEBUG: websockets.server: x half-closing TCP connection
+21:38:22 DEBUG: websockets.server: < EOF
+21:38:22 DEBUG: websockets.server: = connection is CLOSED

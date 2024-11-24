@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 import json
-import config as cf
+from . import config as cf
 import logging
 import os
 import random
@@ -9,8 +9,15 @@ import re
 from collections import deque
 from time import time
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Enhanced logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('websocket.log')
+    ]
+)
 logger = logging.getLogger(__name__)
 
 chat_history = []
@@ -82,50 +89,58 @@ async def send_periodic_scores(websocket):
                 }
             }))
 
-async def handle_client(websocket, path):
-    global conversation_start_time, overlapped_speech_count
-    client_id = id(websocket)
-    client_address = websocket.remote_address
-    logger.info(f"New client connected: {client_id} from {client_address}")
-    
-    conversation_start_time = time()
-    periodic_scores_task = asyncio.create_task(send_periodic_scores(websocket))
-    
+async def handle_client(websocket):
     try:
-        async for message in websocket:
-            logger.info(f"Received message from client {client_id}: {message}")
-            data = json.loads(message)
-            
-            if data['type'] == 'overlapped_speech':
-                overlapped_speech_count += 1
-                logger.info(f"Overlapped speech detected. Count: {overlapped_speech_count}")
-            
-            elif data['type'] == 'transcription':
-                user_utt = data['data'].lower()
-                logger.info(f"Received user utterance from client {client_id}: {user_utt}")
+        # Add CORS headers
+        websocket.request_headers["Access-Control-Allow-Origin"] = "*"
+        websocket.request_headers["Access-Control-Allow-Methods"] = "GET, POST"
+        websocket.request_headers["Access-Control-Allow-Headers"] = "*"
+        
+        global conversation_start_time, overlapped_speech_count
+        client_id = id(websocket)
+        client_address = websocket.remote_address
+        logger.info(f"New client connected: {client_id} from {client_address}")
+        
+        conversation_start_time = time()
+        periodic_scores_task = asyncio.create_task(send_periodic_scores(websocket))
+        
+        try:
+            async for message in websocket:
+                logger.info(f"Received message from client {client_id}: {message}")
+                data = json.loads(message)
                 
-                # Generate biomarker scores
-                biomarker_scores = generate_biomarker_scores(user_utt)
-                logger.info(f"Generated biomarker scores for client {client_id}: {biomarker_scores}")
-                await websocket.send(json.dumps({'type': 'biomarker_scores', 'data': biomarker_scores}))
+                if data['type'] == 'overlapped_speech':
+                    overlapped_speech_count += 1
+                    logger.info(f"Overlapped speech detected. Count: {overlapped_speech_count}")
                 
-                # Generate LLM response
-                response = process_user_utterance(user_utt)
-                logger.info(f"Generated response for client {client_id}: {response}")
-                await websocket.send(json.dumps({'type': 'llm_response', 'data': response}))
+                elif data['type'] == 'transcription':
+                    user_utt = data['data'].lower()
+                    logger.info(f"Received user utterance from client {client_id}: {user_utt}")
+                    
+                    # Generate biomarker scores
+                    biomarker_scores = generate_biomarker_scores(user_utt)
+                    logger.info(f"Generated biomarker scores for client {client_id}: {biomarker_scores}")
+                    await websocket.send(json.dumps({'type': 'biomarker_scores', 'data': biomarker_scores}))
+                    
+                    # Generate LLM response
+                    response = process_user_utterance(user_utt)
+                    logger.info(f"Generated response for client {client_id}: {response}")
+                    await websocket.send(json.dumps({'type': 'llm_response', 'data': response}))
 
-    except websockets.exceptions.ConnectionClosed as e:
-        logger.info(f"WebSocket connection closed for client {client_id}: {e}")
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error for client {client_id}: {e}")
+        except websockets.exceptions.ConnectionClosed as e:
+            logger.info(f"WebSocket connection closed for client {client_id}: {e}")
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error for client {client_id}: {e}")
+        except Exception as e:
+            logger.error(f"Error handling client {client_id}: {e}")
+        finally:
+            periodic_scores_task.cancel()
+            conversation_start_time = None
+            user_utterances.clear()
+            overlapped_speech_count = 0
+            logger.info(f"Client disconnected: {client_id}")
     except Exception as e:
-        logger.error(f"Error handling client {client_id}: {e}")
-    finally:
-        periodic_scores_task.cancel()
-        conversation_start_time = None
-        user_utterances.clear()
-        overlapped_speech_count = 0
-        logger.info(f"Client disconnected: {client_id}")
+        logger.error(f"Error in handle_client: {e}")
 
 def process_user_utterance(user_utt):
     global chat_history
@@ -160,17 +175,25 @@ def process_user_utterance(user_utt):
 async def main():
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 8765))
-    print(f"------------HOST: {host}")
-    print(f"------------PORT: {port}")
+    logger.info("Starting WebSocket server...")
     
-    server = await websockets.serve(
-        handle_client, 
-        host,
-        port,
-        origins=None  # Consider restricting this in production
-    )
-    logger.info(f"WebSocket server started on ws://{host}:{port}")
-    await server.wait_closed()
+    try:
+        server = await websockets.serve(
+            handle_client, 
+            host,
+            port,
+            ping_interval=None  # Add this to prevent connection timeouts
+        )
+        logger.info(f"WebSocket server started successfully on ws://{host}:{port}")
+        await server.wait_closed()
+    except Exception as e:
+        logger.error(f"Failed to start WebSocket server: {e}")
+        raise
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Server shutting down...")
+    except Exception as e:
+        logger.error(f"Server crashed: {e}")
