@@ -1,7 +1,8 @@
+# requirements-web.txt
+django>=3.2,<4.0
+channels[daphne]>=4.0.0
 python-decouple
-Django>=3.2,<4.0
 psycopg2-binary
 websockets
 llama-cpp-python
-asyncio
 azure-cognitiveservices-speech==1.40.0

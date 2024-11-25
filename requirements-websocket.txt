@@ -1,0 +1,5 @@
+# requirements-websocket.txt
+websockets
+llama-cpp-python
+python-decouple
+azure-cognitiveservices-speech==1.40.0

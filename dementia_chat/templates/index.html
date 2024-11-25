@@ -27,8 +27,8 @@
         const serviceRegion = "eastus";
         // Replace static wsUrl with dynamic version
         const wsUrl = window.location.hostname === 'localhost' 
-            ? `ws://${window.location.hostname}:8765`  // Browser access
-            : 'ws://websocket:8765'; // Container access
+            ? `ws://${window.location.hostname}:8000/ws/chat/`
+            : `ws://${window.location.hostname}/ws/chat/`;
         // const wsUrl = "wss://dementia.ngrok.app";
 
         let recognizer, synthesizer, ws;

@@ -131,3 +131,8 @@ TypeError: handle_client() missing 1 required positional argument: 'path'
 21:38:22 DEBUG: websockets.server: x half-closing TCP connection
 21:38:22 DEBUG: websockets.server: < EOF
 21:38:22 DEBUG: websockets.server: = connection is CLOSED
+00:24:10 INFO: websocket.config: LLM initialized successfully
+00:24:10 DEBUG: asyncio: Using selector: EpollSelector
+00:24:10 INFO: __main__: Starting WebSocket server...
+00:24:10 INFO: websockets.server: server listening on 0.0.0.0:8765
+00:24:10 INFO: __main__: WebSocket server started successfully on ws://0.0.0.0:8765

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'dementia_chat',
 ]
 
@@ -70,6 +71,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'interface_app.wsgi.application'
+
+ASGI_APPLICATION = 'interface_app.asgi.application'
 
 
 # Database

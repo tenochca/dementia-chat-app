@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y \
     portaudio19-dev \
     python3-pyaudio
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-websocket.txt .
+RUN pip install --no-cache-dir -r requirements-websocket.txt
 
 # Copy entire websocket directory and maintain structure
 COPY websocket /app/websocket
