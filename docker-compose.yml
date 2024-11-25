@@ -27,21 +27,6 @@ services:
     networks:
       - my_network
 
-  websocket:
-    build:
-      context: .
-      dockerfile: Dockerfile-websocket
-    command: python -m websocket.websocket_server
-    volumes:
-      - .:/app
-    ports:
-      - "8765:8765"
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8765
-    networks:
-      - my_network
-
 networks:
   my_network:
     driver: bridge
