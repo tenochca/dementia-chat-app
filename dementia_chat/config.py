@@ -73,7 +73,7 @@ max_length = 256
 prompt = "You are an assistant for dementia patients. Provide any response as much short as possible."
 
 try:
-    model_path = current_path + "/Phi-3_finetuned.gguf"
+    model_path = current_path + "/services/Phi-3_finetuned.gguf"
     if not os.path.exists(model_path):
         logger.error(f"Model file not found: {model_path}")
         raise FileNotFoundError(f"Model file not found: {model_path}")

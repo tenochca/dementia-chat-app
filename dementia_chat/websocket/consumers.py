@@ -6,7 +6,7 @@ import random
 import re
 from collections import deque
 import asyncio
-from . import config as cf
+from .. import config as cf
 
 logger = logging.getLogger(__name__)
 

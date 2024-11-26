@@ -8,7 +8,7 @@ import datetime
 import re
 
 from . import asr
-from . import config as cf
+from .. import config as cf
 
 # set API keys
 speech_key, service_region = cf.speech_key, cf.service_region
