@@ -129,6 +129,7 @@
                 initChart();
             }
             startChartUpdates();
+            initAudioProcessing();
         }
 
         function stopListening() {
@@ -291,6 +292,92 @@
             if (updateInterval) {
                 clearInterval(updateInterval);
                 updateInterval = null;
+            }
+        }
+
+        async function initAudioProcessing() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new AudioContext({
+                    sampleRate: 16000
+                });
+                
+                const source = audioContext.createMediaStreamSource(stream);
+        
+                // Create ScriptProcessor for direct audio processing
+                const bufferSize = 4096;
+                const processorNode = audioContext.createScriptProcessor(bufferSize, 1, 1);
+                
+                // Buffer to accumulate smaller chunks of audio
+                const sampleRate = audioContext.sampleRate;
+                const chunkBufferSize = sampleRate * 0.5; // 0.5 second chunks
+                let audioBuffer = new Float32Array(chunkBufferSize);
+                let bufferIndex = 0;
+                
+                // Helper function to convert array buffer to base64
+                function arrayBufferToBase64(buffer) {
+                    let binary = '';
+                    const bytes = new Uint8Array(buffer);
+                    const len = bytes.byteLength;
+                    for (let i = 0; i < len; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    return btoa(binary);
+                }
+                
+                processorNode.onaudioprocess = (e) => {
+                    if (!isListening) return;
+                    
+                    const input = e.inputBuffer.getChannelData(0);
+                    
+                    // Add input to buffer
+                    for (let i = 0; i < input.length && bufferIndex < chunkBufferSize; i++) {
+                        audioBuffer[bufferIndex++] = input[i];
+                    }
+                    
+                    // When we have enough audio data
+                    if (bufferIndex >= chunkBufferSize) {
+                        try {
+                            // Convert to 16-bit integers
+                            const intData = new Int16Array(chunkBufferSize);
+                            for (let i = 0; i < chunkBufferSize; i++) {
+                                intData[i] = Math.max(-32768, Math.min(32767, Math.round(audioBuffer[i] * 32767)));
+                            }
+                            
+                            // Convert to base64 directly from buffer
+                            const base64Data = arrayBufferToBase64(intData.buffer);
+                            
+                            // Send to server
+                            if (ws && ws.readyState === WebSocket.OPEN) {
+                                const timestamp = Date.now();
+                                ws.send(JSON.stringify({
+                                    type: 'audio_data',
+                                    timestamp: timestamp,
+                                    data: base64Data,
+                                    sampleRate: sampleRate
+                                }));
+                                log(`Sent audio chunk at ${new Date(timestamp).toISOString()}, length: ${intData.length} samples`);
+                            }
+                        } catch (error) {
+                            log(`Error processing audio chunk: ${error.message}`);
+                        }
+                        
+                        // Reset buffer
+                        bufferIndex = 0;
+                        audioBuffer = new Float32Array(chunkBufferSize);
+                    }
+                };
+                
+                // Connect the nodes
+                source.connect(processorNode);
+                processorNode.connect(audioContext.destination);
+                
+                // Store nodes for cleanup
+                audioProcessor = processorNode;
+                
+                log(`Audio processing initialized with 0.5-second chunks at ${sampleRate}Hz`);
+            } catch (error) {
+                log(`Error initializing audio: ${error.message}`);
             }
         }
 

@@ -1,3 +1,4 @@
+import base64
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from time import time
@@ -87,9 +88,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'type': 'llm_response',
                     'data': response
                 }))
+            
+            elif data['type'] == 'audio_data':
+                await self.process_audio_data(data['data'], data['sampleRate'])
                 
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
+
+    async def process_audio_data(self, base64_data, sample_rate):
+        try:
+            # Decode base64 to bytes
+            audio_bytes = base64.b64decode(base64_data)
+            
+            # Process the audio bytes as needed
+            # For example, you can save the audio to a file or send it to a speech recognition service
+            
+            logger.info(f"Received audio data: {len(audio_bytes)} bytes at {sample_rate}Hz")
+            
+            # Example: Save audio to a file (optional)
+            with open(f'audio_{self.client_id}.wav', 'ab') as f:
+                f.write(audio_bytes)
+            
+            # Example: Send audio to a speech recognition service (optional)
+            # transcription = await speech_recognition_service(audio_bytes, sample_rate)
+            # logger.info(f"Transcription: {transcription}")
+            
+        except Exception as e:
+            logger.error(f"Error processing audio data: {e}")
 
     def generate_pragmatic_score(self, user_utt):
         return random.random()
