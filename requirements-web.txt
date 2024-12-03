@@ -6,3 +6,4 @@ psycopg2-binary
 websockets
 llama-cpp-python
 azure-cognitiveservices-speech==1.40.0
+whitenoise
