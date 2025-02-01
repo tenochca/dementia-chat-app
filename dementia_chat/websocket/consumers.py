@@ -7,6 +7,8 @@ import random
 import re
 from collections import deque
 import asyncio
+import numpy as np
+import librosa
 from .. import config as cf
 
 logger = logging.getLogger(__name__)
@@ -90,6 +92,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }))
             
             elif data['type'] == 'audio_data':
+                print("AUDIO DATA RECEIVED")
                 await self.process_audio_data(data['data'], data['sampleRate'])
                 
         except json.JSONDecodeError as e:
@@ -100,18 +103,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # Decode base64 to bytes
             audio_bytes = base64.b64decode(base64_data)
             
-            # Process the audio bytes as needed
-            # For example, you can save the audio to a file or send it to a speech recognition service
-            
             logger.info(f"Received audio data: {len(audio_bytes)} bytes at {sample_rate}Hz")
+        
+            audio_array = np.frombuffer(audio_bytes, dtype=np.int16)
             
-            # Example: Save audio to a file (optional)
-            with open(f'audio_{self.client_id}.wav', 'ab') as f:
-                f.write(audio_bytes)
+            # Normalize audio data
+            audio_array = audio_array / np.max(np.abs(audio_array))
             
-            # Example: Send audio to a speech recognition service (optional)
-            # transcription = await speech_recognition_service(audio_bytes, sample_rate)
-            # logger.info(f"Transcription: {transcription}")
+            # Convert to float32
+            audio_array = librosa.util.buf_to_float(audio_array, n_bytes=2, dtype=np.float32)
             
         except Exception as e:
             logger.error(f"Error processing audio data: {e}")

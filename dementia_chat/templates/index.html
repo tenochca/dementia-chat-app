@@ -310,7 +310,7 @@
                 
                 // Buffer to accumulate smaller chunks of audio
                 const sampleRate = audioContext.sampleRate;
-                const chunkBufferSize = sampleRate * 0.5; // 0.5 second chunks
+                const chunkBufferSize = sampleRate * 5; 
                 let audioBuffer = new Float32Array(chunkBufferSize);
                 let bufferIndex = 0;
                 
