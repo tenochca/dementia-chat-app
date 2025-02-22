@@ -164,14 +164,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         'Takes a classif model and returns probability values'
         probabilities = model.predict_proba(X)[:,1]
         return probabilities
+    
+    def get_chunks(self, features, chunk_size):
+        'Seperate features in 5-second non-overlapping chunks'
+        return [features.iloc[i:i+chunk_size].values for i in range(0, len(features), chunk_size) if len(features.iloc[i:i+chunk_size]) == chunk_size]
 
-    def process_features(self, features):
-        'Process features and return score'
-        if features is not None and len(features) > 0:
-            # Reshape features to match model input requirements
-            feature_array = self.reshape_data(np.array([features.values]))
-            return feature_array
-        return None
+
+    def process_scores(self, features, chunk_size, model):
+        'getting scores from file'
+        print("\tGetting scores")
+        chunks = self.get_chunks(features, chunk_size)
+        feature_array = self.reshape_data(np.array(chunks))
+        print(f'\tReshaped features shape: {feature_array.shape}')
+        scores = self.get_probs(model, feature_array)
+        print(f"\tSCORES: {scores}\n")
+        return scores
 
 
     def generate_pragmatic_score(self, user_utt):
@@ -197,10 +204,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return min(fillers_per_minute / 10, 1)
 
     def generate_prosody_score(self):
-        return random.random()
+        if self.prosody_features is not None:
+            try:
+                chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
+                score = self.process_scores(self.prosody_features, chunk_size, self.prosody_model)
+                return score
+            except Exception as e:
+                logger.error(f"Error processing prosody features: {e}")
+                return random.random()
 
     def generate_pronunciation_score(self, user_utt):
-        return random.random()
+        if self.pronunciation_features is not None:
+            try:
+                chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
+                score = self.process_scores(self.pronunciation_features, chunk_size, self.prosody_model)
+                return score
+            except Exception as e:
+                logger.error(f"Error processing prosody features: {e}")
+                return random.random()
 
     def generate_biomarker_scores(self, user_utt):
         self.user_utterances.append(user_utt)

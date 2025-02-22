@@ -88,3 +88,7 @@ try:
 except Exception as e:
     logger.error(f"Failed to initialize LLM: {e}")
     raise
+
+######### PROSODY & PRONUNCIATION MODEL PATHS #############
+pronunciation_model_path = "dementia_chat\services\pronunciation_rf(v4).pkl"
+prosody_model_path = "dementia_chat\services\prosody_rf(v4).pkl"
