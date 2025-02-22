@@ -25,7 +25,7 @@ PROSODY_FEATURES = [
     'pcm_RMSenergy_sma', 'pcm_zcr_sma'
 ]
 
-PROSODY_FEATURES = [
+PRONUNCIATION_FEATURES = [
     'audSpec_Rfilt_sma[3]', 'audSpec_Rfilt_sma[5]', 'audSpec_Rfilt_sma[9]', 'audSpec_Rfilt_sma[11]', 
     'audSpec_Rfilt_sma[12]', 'audSpec_Rfilt_sma[16]', 'audSpec_Rfilt_sma[20]', 'audSpec_Rfilt_sma[21]', 
     'audSpec_Rfilt_sma[23]', 'audSpec_Rfilt_sma[24]', 'audSpec_Rfilt_sma[25]', 'pcm_fftMag_fband250-650_sma', 
@@ -51,6 +51,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.conversation_start_time = time()
             self.user_utterances = deque(maxlen=100)
             self.overlapped_speech_count = 0
+            self.prosody_features = None
+            self.pronunciation_features = None
             self.chat_history = []  # Add chat_history as instance variable
             await self.accept()
             self.periodic_scores_task = asyncio.create_task(self.send_periodic_scores())
@@ -142,10 +144,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             features = feature_extractor.process_signal(audio_array, sample_rate)
             print(f"Extracted features: {features.shape}")
-            
-            chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
 
+            self.prosody_features = features[PROSODY_FEATURES]
+            self.pronunciation_features = features[PRONUNCIATION_FEATURES]
 
+            return self.prosody_features, self.pronunciation_features
+        
         except Exception as e:
             logger.error(f"Error processing audio data: {e}")
 
@@ -200,3 +204,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'turntaking': turntaking_score
                     }
                 }))
+
