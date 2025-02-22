@@ -9,3 +9,4 @@ azure-cognitiveservices-speech==1.40.0
 whitenoise
 librosa
 numpy
+opensmile

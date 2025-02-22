@@ -9,9 +9,22 @@ from collections import deque
 import asyncio
 import numpy as np
 import librosa
+import opensmile
 from .. import config as cf
 
 logger = logging.getLogger(__name__)
+
+# Constants
+WINDOW_SIZE = 5  # seconds
+HOP_LENGTH = 0.01  # 10ms for feature extraction
+SAMPLE_RATE = 16000  # Hz
+
+# Initialize feature extractor
+feature_extractor = opensmile.Smile(
+    feature_set=opensmile.FeatureSet.ComParE_2016,
+    feature_level=opensmile.FeatureLevel.LowLevelDescriptors,
+    sampling_rate=SAMPLE_RATE,
+)
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -112,6 +125,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             
             # Convert to float32
             audio_array = librosa.util.buf_to_float(audio_array, n_bytes=2, dtype=np.float32)
+
+            features = feature_extractor.process_signal(audio_array, sample_rate)
+            print(f"Extracted features: {features.shape}")
             
         except Exception as e:
             logger.error(f"Error processing audio data: {e}")
