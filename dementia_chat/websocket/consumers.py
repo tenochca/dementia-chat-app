@@ -10,6 +10,7 @@ import asyncio
 import numpy as np
 import librosa
 import opensmile
+import joblib
 from .. import config as cf
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.chat_history = []  # Add chat_history as instance variable
             await self.accept()
             self.periodic_scores_task = asyncio.create_task(self.send_periodic_scores())
+            self.prosody_model = joblib.load(cf.prosody_model_path)
+            self.pronunciation_model = joblib.load(cf.pronunciation_model_path)
         except Exception as e:
             logger.error(f"Failed to initialize consumer: {e}")
             return
@@ -153,6 +156,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error processing audio data: {e}")
 
+    def reshape_data(self, X):
+        'Reshape 3D data to 2D'
+        return X.reshape(X.shape[0], -1)
+
+    def get_probs(self, model, X):
+        'Takes a classif model and returns probability values'
+        probabilities = model.predict_proba(X)[:,1]
+        return probabilities
+
+    def process_features(self, features):
+        'Process features and return score'
+        if features is not None and len(features) > 0:
+            # Reshape features to match model input requirements
+            feature_array = self.reshape_data(np.array([features.values]))
+            return feature_array
+        return None
+
+
     def generate_pragmatic_score(self, user_utt):
         return random.random()
 
@@ -175,7 +196,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         fillers_per_minute = len(all_fillers) / duration_minutes if duration_minutes > 0 else 0
         return min(fillers_per_minute / 10, 1)
 
-    def generate_prosody_score(self, user_utt):
+    def generate_prosody_score(self):
         return random.random()
 
     def generate_pronunciation_score(self, user_utt):
