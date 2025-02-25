@@ -23,7 +23,8 @@ SAMPLE_RATE = 16000  # Hz
 PROSODY_FEATURES = [
     'F0final_sma', 'voicingFinalUnclipped_sma',
     'audspec_lengthL1norm_sma', 'audspecRasta_lengthL1norm_sma',
-    'pcm_RMSenergy_sma', 'pcm_zcr_sma'
+    'pcm_RMSenergy_sma', 'pcm_zcr_sma', 'jitterLocal_sma', 
+    'jitterDDP_sma', 'shimmerLocal_sma', 'logHNR_sma'
 ]
 
 PRONUNCIATION_FEATURES = [
@@ -172,8 +173,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     def process_scores(self, features, chunk_size, model):
         'getting scores from file'
-        print("\tGetting scores")
         chunks = self.get_chunks(features, chunk_size)
+        print(f'\tOriginal features shape: {features.shape}')
         feature_array = self.reshape_data(np.array(chunks))
         print(f'\tReshaped features shape: {feature_array.shape}')
         scores = self.get_probs(model, feature_array)
@@ -206,6 +207,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def generate_prosody_score(self):
         if self.prosody_features is not None:
             try:
+                print("\tGenerating prosody score...")
                 chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
                 score = self.process_scores(self.prosody_features, chunk_size, self.prosody_model)
                 return score
@@ -213,11 +215,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.error(f"Error processing prosody features: {e}")
                 return random.random()
 
-    def generate_pronunciation_score(self, user_utt):
+    def generate_pronunciation_score(self):
         if self.pronunciation_features is not None:
             try:
+                print("\tGenerating pronunciation score...")
                 chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
-                score = self.process_scores(self.pronunciation_features, chunk_size, self.prosody_model)
+                score = self.process_scores(self.pronunciation_features, chunk_size, self.pronunciation_model)
                 return score
             except Exception as e:
                 logger.error(f"Error processing prosody features: {e}")
@@ -228,8 +231,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return {
             'pragmatic': self.generate_pragmatic_score(user_utt),
             'grammar': self.generate_grammar_score(user_utt),
-            'prosody': self.generate_prosody_score(user_utt),
-            'pronunciation': self.generate_pronunciation_score(user_utt)
+            'prosody': self.generate_prosody_score(),
+            'pronunciation': self.generate_pronunciation_score()
         }
     
     async def send_periodic_scores(self):  # Remove websocket parameter
