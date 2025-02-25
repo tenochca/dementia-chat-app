@@ -210,7 +210,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 print("\tGenerating prosody score...")
                 chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
                 score = self.process_scores(self.prosody_features, chunk_size, self.prosody_model)
-                return score
+                return score[0]
             except Exception as e:
                 logger.error(f"Error processing prosody features: {e}")
                 return random.random()
@@ -221,7 +221,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 print("\tGenerating pronunciation score...")
                 chunk_size = int(WINDOW_SIZE / HOP_LENGTH)
                 score = self.process_scores(self.pronunciation_features, chunk_size, self.pronunciation_model)
-                return score
+                return score[0]
             except Exception as e:
                 logger.error(f"Error processing prosody features: {e}")
                 return random.random()
