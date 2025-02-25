@@ -12,6 +12,9 @@ import librosa
 import opensmile
 import joblib
 from .. import config as cf
+import uuid
+from django.apps import apps
+from channels.db import database_sync_to_async
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +49,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.client_id = id(self)
         try:
+            # Get the model during runtime instead of import time
+            self.Utterance = apps.get_model('dementia_chat', 'Utterance')
+            # Add session_id for grouping conversation utterances
+            self.session_id = str(uuid.uuid4())
             # Verify LLM is initialized
             if not cf.llm:
                 raise RuntimeError("LLM not initialized")
@@ -72,7 +79,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.overlapped_speech_count = 0
         logger.info(f"Client disconnected: {self.client_id}")
 
-    def process_user_utterance(self, user_utt):
+    @database_sync_to_async
+    def store_utterance(self, speaker, text):
+        """Store utterance in database asynchronously"""
+        try:
+            self.Utterance.objects.create(
+                speaker=speaker,
+                text=text,
+                session_id=self.session_id
+            )
+            logger.info(f"Stored utterance: {speaker} - {text[:50]}... (Session: {self.session_id})")
+        except Exception as e:
+            logger.error(f"Failed to store utterance: {e}")
+
+    async def process_user_utterance(self, user_utt):
         try:
             # Prepare input for LLM
             history = self.chat_history[-5:] if len(self.chat_history) > 5 else self.chat_history
@@ -88,6 +108,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # Generate response using LLM
             output = cf.llm(input_text, max_tokens=cf.max_length, stop=["<|end|>",".", "?"], echo=True)
             system_utt = (output['choices'][0]['text'].split("<|assistant|>")[-1]).strip()
+            
+            # Store user utterance
+            await self.store_utterance('User', user_utt)
+            await self.store_utterance('System', system_utt)
             
             # Update chat history
             self.chat_history.append({'Speaker': 'User', 'Utt': user_utt})
@@ -118,7 +142,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }))
                 
                 # Generate LLM response
-                response = self.process_user_utterance(user_utt)
+                response = await self.process_user_utterance(user_utt)
                 await self.send(json.dumps({
                     'type': 'llm_response',
                     'data': response
